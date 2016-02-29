@@ -18,6 +18,16 @@ public class RateLimit: NSObject {
 
         return false
     }
+    
+    public class func execute(name name: String, limit: NSTimeInterval, override: Bool, @noescape block: Void -> ()) -> Bool {
+        if override {
+            block()
+            recordExecution(name: name)
+            return true
+        } else {
+            return execute(name: name, limit: limit, block: block)
+        }
+    }
 
     public class func resetLimitForName(name: String) {
         dispatch_sync(queue) {
@@ -61,9 +71,13 @@ public class RateLimit: NSObject {
 			}
 
 			// Record execution
-			dictionary[name] = NSDate()
+			recordExecution(name: name)
 		}
 		
         return should
+    }
+    
+    private class func recordExecution(name name: String) {
+        dictionary[name] = NSDate()
     }
 }

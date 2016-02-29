@@ -39,6 +39,54 @@ class RateLimitTests: XCTestCase {
         XCTAssertTrue(reported)
         waitForExpectationsWithTimeout(0, handler: nil)
     }
+    
+    func testOverride() {
+        let name1 = "testOverride1"
+        
+        // It should get excuted first
+        let expectation1 = expectationWithDescription("Execute 1")
+        var reported = RateLimit.execute(name: name1, limit: 2) {
+            expectation1.fulfill()
+        }
+        XCTAssertTrue(reported)
+        waitForExpectationsWithTimeout(0, handler: nil)
+        
+        // Normally this would not run because it is inside the limit.
+        // However, the override should cause it to run anyway.
+        let expectation2 = expectationWithDescription("Execute 2")
+        reported = RateLimit.execute(name: name1, limit: 1, override: true) {
+            expectation2.fulfill()
+        }
+        XCTAssertTrue(reported)
+        waitForExpectationsWithTimeout(0, handler: nil)
+        
+        let name2 = "testOverride2"
+        
+        // Make sure an overridden execution has the same effect of preventing non-overridden executions within the limit
+        let expectation3 = expectationWithDescription("Execute 3")
+        reported = RateLimit.execute(name: name2, limit: 2, override: true) {
+            expectation3.fulfill()
+        }
+        XCTAssertTrue(reported)
+        waitForExpectationsWithTimeout(0, handler: nil)
+        
+        // Not right away after
+        reported = RateLimit.execute(name: name2, limit: 1) {
+            XCTFail("This shouldn't have run.")
+        }
+        XCTAssertFalse(reported)
+        
+        // Sleep for a second
+        sleep(1)
+        
+        // Now it should get executed
+        let expectation4 = expectationWithDescription("Execute 2")
+        reported = RateLimit.execute(name: name2, limit: 1) {
+            expectation4.fulfill()
+        }
+        XCTAssertTrue(reported)
+        waitForExpectationsWithTimeout(0, handler: nil)
+    }
 
     func testResetting() {
         let name = "testResetting"
