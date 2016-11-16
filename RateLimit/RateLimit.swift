@@ -8,9 +8,9 @@
 
 import Foundation
 
-public class RateLimit: NSObject {
+open class RateLimit: NSObject {
 
-    public class func execute(name name: String, limit: NSTimeInterval, @noescape block: Void -> ()) -> Bool {
+    open class func execute(name: String, limit: TimeInterval, block: (Void) -> ()) -> Bool {
         if shouldExecute(name: name, limit: limit) {
             block()
 			return true
@@ -19,7 +19,7 @@ public class RateLimit: NSObject {
         return false
     }
     
-    public class func execute(name name: String, limit: NSTimeInterval, override: Bool, @noescape block: Void -> ()) -> Bool {
+    open class func execute(name: String, limit: TimeInterval, override: Bool, block: (Void) -> ()) -> Bool {
         if override {
             block()
             recordExecution(name: name)
@@ -29,14 +29,14 @@ public class RateLimit: NSObject {
         }
     }
 
-    public class func resetLimitForName(name: String) {
-        dispatch_sync(queue) {
-            dictionary.removeValueForKey(name)
+    open class func resetLimitForName(_ name: String) {
+        queue.sync {
+            dictionary.removeValue(forKey: name)
         }
     }
 
-    public class func resetAllLimits() {
-        dispatch_sync(queue) {
+    open class func resetAllLimits() {
+        queue.sync {
             dictionary.removeAll()
         }
     }
@@ -44,9 +44,9 @@ public class RateLimit: NSObject {
 
     // MARK: - Private
 
-    static let queue = dispatch_queue_create("com.samsoffes.ratelimit", DISPATCH_QUEUE_SERIAL)
+    static let queue = DispatchQueue(label: "com.samsoffes.ratelimit", attributes: [])
 
-	static var dictionary = [String: NSDate]() {
+	static var dictionary = [String: Date]() {
 		didSet {
 			didChangeDictionary()
 		}
@@ -56,10 +56,10 @@ public class RateLimit: NSObject {
 		// Do nothing
 	}
 
-    private class func shouldExecute(name name: String, limit: NSTimeInterval) -> Bool {
+    fileprivate class func shouldExecute(name: String, limit: TimeInterval) -> Bool {
 		var should = false
 
-		dispatch_sync(queue) {
+		queue.sync {
 			// Lookup last executed
 			if let lastExecutedAt = dictionary[name] {
 				let timeInterval = lastExecutedAt.timeIntervalSinceNow
@@ -77,7 +77,7 @@ public class RateLimit: NSObject {
         return should
     }
     
-    private class func recordExecution(name name: String) {
-        dictionary[name] = NSDate()
+    fileprivate class func recordExecution(name: String) {
+        dictionary[name] = Date()
     }
 }
