@@ -10,7 +10,7 @@ import Foundation
 
 open class RateLimit: NSObject {
 
-    open class func execute(name: String, limit: TimeInterval, block: (Void) -> ()) -> Bool {
+    @discardableResult open class func execute(name: String, limit: TimeInterval, block: (Void) -> ()) -> Bool {
         if shouldExecute(name: name, limit: limit) {
             block()
 			return true
@@ -19,7 +19,7 @@ open class RateLimit: NSObject {
         return false
     }
     
-    open class func execute(name: String, limit: TimeInterval, override: Bool, block: (Void) -> ()) -> Bool {
+    @discardableResult open class func execute(name: String, limit: TimeInterval, override: Bool, block: (Void) -> ()) -> Bool {
         if override {
             block()
             recordExecution(name: name)
